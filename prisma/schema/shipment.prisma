@@ -1,0 +1,99 @@
+model Shipment {
+  id             String       @id @default(cuid())
+  trackingId     String       @unique 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  customerId String
+  customer   User   @relation("ShipmentCustomer", fields: [customerId], references: [id])
+
+  senderAddressId   String
+  senderAddress     Address @relation("ShipmentSenderAddress", fields: [senderAddressId], references: [id])
+  receiverAddressId String
+  receiverAddress   Address @relation("ShipmentReceiverAddress", fields: [receiverAddressId], references: [id])
+
+  originZoneId      String
+  originZone        Zone   @relation("ShipmentOriginZone", fields: [originZoneId], references: [id])
+  destinationZoneId String
+  destinationZone   Zone   @relation("ShipmentDestinationZone", fields: [destinationZoneId], references: [id])
+
+  originHubId      String?
+  originHub        Hub?    @relation("ShipmentOriginHub", fields: [originHubId], references: [id])
+  destinationHubId String?
+  destinationHub   Hub?    @relation("ShipmentDestinationHub", fields: [destinationHubId], references: [id])
+
+  currentHubId String?
+  currentHub   Hub?    @relation("ShipmentCurrentHub", fields: [currentHubId], references: [id])
+
+  weightKg     Float
+  lengthCm     Float?
+  widthCm      Float?
+  heightCm     Float?
+  declaredValue Float?
+  codAmount     Float   @default(0) 
+  serviceLevel  ServiceLevel @default(STANDARD)
+  description   String?
+
+  status      ShipmentStatus @default(CREATED)
+  holderType  HolderType     @default(CUSTOMER)
+
+  price          Float
+  paymentId      String?        @unique
+  payment        Payment?       @relation(fields: [paymentId], references: [id])
+
+  
+  version Int @default(0)
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  pickupScheduledAt DateTime?
+  pickedUpAt        DateTime?
+  deliveredAt       DateTime?
+  cancelledAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events           ShipmentEvent[]
+  assignments      CourierAssignment[]
+  manifestItems    ManifestItem[]
+  returnRequest    ReturnRequest?
+  earnings         CourierEarning[]
+
+  @@index([organizationId, status])
+  @@index([customerId])
+  @@index([currentHubId])
+  @@map("shipments")
+}
+model ShipmentEvent {
+  id         String         @id @default(cuid())
+  shipmentId String
+  shipment   Shipment       @relation(fields: [shipmentId], references: [id])
+
+  status     ShipmentStatus
+  note       String?
+  location   String? 
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([shipmentId, createdAt])
+  @@map("shipment_events")
+}
+
+model ReturnRequest {
+  id         String       @id @default(cuid())
+  shipmentId String       @unique
+  shipment   Shipment     @relation(fields: [shipmentId], references: [id])
+
+  reason     String
+  status     ReturnStatus @default(REQUESTED)
+
+  initiatedAt DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  @@map("return_requests")
+}
