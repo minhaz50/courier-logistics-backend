@@ -1,34 +1,26 @@
-import jwt, { type JwtPayload, type SignOptions } from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
+import { config } from "../config";
+import type { Role } from "../../generated/prisma";
 
-const createToken = (
-	payload: JwtPayload,
-	secret: string,
-	expiresIn: SignOptions,
-) => {
-	const token = jwt.sign(payload, secret, {
-		expiresIn,
-	} as SignOptions);
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: Role;
+  organizationId: string | null;
+}
 
-	return token;
-};
+export const signAccessToken = (payload: JwtPayload) =>
+  jwt.sign(payload, config.jwt.accessSecret, {
+    expiresIn: config.jwt.accessExpiresIn,
+  } as SignOptions);
 
-const verifyToken = (token: string, secret: string) => {
-	try {
-		const verifiedToken = jwt.verify(token, secret);
-		return {
-			success: true,
-			data: verifiedToken,
-		};
-	} catch (error: any) {
-		console.log("Token verification failed:", error);
-		return {
-			success: false,
-			error: error.message,
-		};
-	}
-};
+export const signRefreshToken = (payload: JwtPayload) =>
+  jwt.sign(payload, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshExpiresIn,
+  } as SignOptions);
 
-export const jwtUtils = {
-	createToken,
-	verifyToken,
-};
+export const verifyAccessToken = (token: string) =>
+  jwt.verify(token, config.jwt.accessSecret) as JwtPayload;
+
+export const verifyRefreshToken = (token: string) =>
+  jwt.verify(token, config.jwt.refreshSecret) as JwtPayload;

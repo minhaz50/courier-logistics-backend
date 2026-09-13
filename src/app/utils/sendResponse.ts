@@ -1,26 +1,24 @@
 import type { Response } from "express";
 
-type TMeta = {
-	page: number;
-	limit: number;
-	total: number;
-	totalPages: number;
-};
+interface ResponsePayload<T> {
+  statusCode: number;
+  success?: boolean;
+  message: string;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+  };
+  data?: T;
+}
 
-type TResponseData<T> = {
-	success: boolean;
-	statusCode: number;
-	message: string;
-	data: T;
-	meta?: TMeta;
-};
-
-export const sendResponse = <T>(res: Response, data: TResponseData<T>) => {
-	res.status(data.statusCode).json({
-		success: data.success,
-		statusCode: data.statusCode,
-		message: data.message,
-		data: data.data,
-		meta: data.meta,
-	});
+export const sendResponse = <T>(res: Response, payload: ResponsePayload<T>) => {
+  res.status(payload.statusCode).json({
+    success: payload.success ?? true,
+    statusCode: payload.statusCode,
+    message: payload.message,
+    meta: payload.meta,
+    data: payload.data,
+  });
 };

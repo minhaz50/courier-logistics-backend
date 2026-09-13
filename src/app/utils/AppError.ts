@@ -1,19 +1,31 @@
+export class ApiError extends Error {
+  statusCode: number;
+  details?: unknown;
 
-export class AppError extends Error {
+  constructor(statusCode: number, message: string, details?: unknown) {
+    super(message);
+    this.statusCode = statusCode;
+    this.details = details;
+    Object.setPrototypeOf(this, ApiError.prototype);
+    Error.captureStackTrace(this, this.constructor);
+  }
 
-    public statusCode : number
-
-    constructor(statusCode : number , message : string, stack = "") {
-        super(message) // throw new Error(message)
-
-        this.statusCode = statusCode
-
-        if(stack){
-            this.stack = stack
-        }else{
-            Error.captureStackTrace(this, this.constructor)
-        }
-    }
+  static badRequest(message: string, details?: unknown) {
+    return new ApiError(400, message, details);
+  }
+  static unauthorized(message = "Unauthorized") {
+    return new ApiError(401, message);
+  }
+  static forbidden(message = "Forbidden") {
+    return new ApiError(403, message);
+  }
+  static notFound(message = "Resource not found") {
+    return new ApiError(404, message);
+  }
+  static conflict(message: string, details?: unknown) {
+    return new ApiError(409, message, details);
+  }
+  static internal(message = "Something went wrong") {
+    return new ApiError(500, message);
+  }
 }
-
-//throw new AppError(404, "Not Found")
