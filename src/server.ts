@@ -1,33 +1,45 @@
+import type { Server } from "http";
 import app from "./app";
-import config from "./app/config";
+import { config, assertRequiredEnv } from "./app/config";
+import { prisma } from "./app/lib/prisma";
 
-const PORT = config.port;
+let server: Server;
 
-const main = async () => {
-  try {
-    await prisma.$connect();
-    console.log("Connected to the database successfully.");
+async function main() {
+  assertRequiredEnv();
+  await prisma.$connect();
+  console.log("DB Connected to PostgreSQL via Prisma.");
 
-    await redisClient.connect();
-    console.log("Redis Connected Successfully.");
+  server = app.listen(config.port, () => {
+    console.log(
+      `Courier & Logistics API listening on port ${config.port} (${config.env}).`,
+    );
+  });
+}
 
-    await transporter.verify();
-    console.log("Nodemailer Connected Successfully.");
+main().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});
 
-    await seedSuperAdmin();
-    await seedTesterAdmin();
-    await seedTesterDoctor();
-
-    await deleteUnverifiedDoctors();
-
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error("Error starting the server:", error);
+function shutdown(signal: string) {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server?.close(async () => {
     await prisma.$disconnect();
-    process.exit(1);
-  }
-};
+    console.log("[server] Closed all connections. Bye.");
+    process.exit(0);
+  });
+}
 
-main();
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+  server?.close(() => process.exit(1));
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
+});
