@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import type z from "zod";
-import { AppError } from "../utils/AppError";
+import { AppError } from "../utils/ApiError";
 import { catchAsync } from "../utils/catchAsync";
 
 export const validateRequest = (zodSchema: z.ZodObject) => {
