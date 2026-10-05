@@ -12,7 +12,7 @@ async function main() {
 
   server = app.listen(config.port, () => {
     console.log(
-      `Courier & Logistics API listening on port ${config.port} (${config.env}).`,
+      `ParceloHub API listening on port ${config.port} (${config.env}).`,
     );
   });
 }
